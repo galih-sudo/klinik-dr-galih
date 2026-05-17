@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SOAP - dr Galih</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+            display: block;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📋 SOAP - Rekam Medis</h2>
+        <div class="info">
+            <strong>Pasien:</strong> {{ pasien.nama }}<br>
+            <strong>Tanggal Lahir:</strong> {{ pasien.tgl_lahir }}
+        </div>
+        <form method="POST">
+            <label>Subjective (Keluhan Pasien):</label>
+            <textarea name="subjective" rows="3" placeholder="Apa yang dirasakan pasien?"></textarea>
+
+            <label>Objective (Hasil Pemeriksaan):</label>
+            <textarea name="objective" rows="3" placeholder="TD, Suhu, Fisik, dll"></textarea>
+
+            <label>Assessment (Diagnosis):</label>
+            <input type="text" name="assessment" placeholder="Diagnosis / Penyakit">
+
+            <label>Planning (Tatalaksana):</label>
+            <textarea name="planning" rows="3" placeholder="Terapi, Edukasi, Rujukan"></textarea>
+
+            <button type="submit">Simpan & Lanjut ke Resep</button>
+        </form>
+    </div>
+</body>
+</html>

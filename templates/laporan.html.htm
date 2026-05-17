@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Laporan - dr Galih</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .nav {
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 15px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Laporan Praktek dr. Galih</h1>
+            <div class="nav">
+                <a href="/dashboard">← Dashboard</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🏥 10 Penyakit Terbanyak</h2>
+            <table>
+                <thead>
+                    <tr><th>Penyakit</th><th>Jumlah Kasus</th></tr>
+                </thead>
+                <tbody>
+                    {% for p in penyakit %}
+                    <tr><td>{{ p.assessment }}</td><td>{{ p.total }}</td></tr>
+                    {% else %}
+                    <tr><td colspan="2">Belum ada data</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>💊 10 Obat Terbanyak Dipakai</h2>
+            <table>
+                <thead>
+                    <tr><th>Obat</th><th>Total Pemakaian</th></tr>
+                </thead>
+                <tbody>
+                    {% for o in obat_top %}
+                    <tr><td>{{ o.nama }}</td><td>{{ o.total }}</td></tr>
+                    {% else %}
+                    <tr><td colspan="2">Belum ada data</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>📅 Kunjungan per Hari</h2>
+            <table>
+                <thead>
+                    <tr><th>Tanggal</th><th>Jumlah Kunjungan</th></tr>
+                </thead>
+                <tbody>
+                    {% for k in kunjungan %}
+                    <tr><td>{{ k.tanggal }}</td><td>{{ k.jml }}</td></tr>
+                    {% else %}
+                    <tr><td colspan="2">Belum ada kunjungan</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

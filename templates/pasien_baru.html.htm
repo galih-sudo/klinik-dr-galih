@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pasien Baru - dr Galih</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .back {
+            display: inline-block;
+            margin-top: 15px;
+            color: #667eea;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📝 Pasien Baru</h2>
+        <form method="POST">
+            <input type="text" name="nama" placeholder="Nama Lengkap" required>
+            <input type="date" name="tgl_lahir" required>
+            <textarea name="alamat" placeholder="Alamat" rows="3"></textarea>
+            <input type="text" name="no_telp" placeholder="No. Telepon">
+            <button type="submit">Simpan & Lanjut Rekam Medis</button>
+        </form>
+        <a href="/dashboard" class="back">← Kembali ke Dashboard</a>
+    </div>
+</body>
+</html>
