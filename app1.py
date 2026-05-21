@@ -94,14 +94,10 @@ def rekam_medis(pasien_id):
         plan = request.form['planning']
         tgl = now_wita()
         lampiran = request.form.get('lampiran_mega', '')
-
-        cur = conn.execute("""
-            INSERT INTO rekam_medis (pasien_id, tanggal, subjective, objective, assessment, planning, lampiran_mega)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (pasien_id, tgl, subj, obj, ass, plan, lampiran))
+        cur = conn.execute("INSERT INTO rekam_medis (pasien_id, tanggal, subjective, objective, assessment, planning, lampiran_mega) VALUES (?,?,?,?,?,?,?)",
+                           (pasien_id, tgl, subj, obj, ass, plan, lampiran))
         rm_id = cur.lastrowid
-
-        conn.execute("INSERT INTO kunjungan (rekam_medis_id, tanggal) VALUES (?, ?)", (rm_id, date_wita()))
+        conn.execute("INSERT INTO kunjungan (rekam_medis_id, tanggal) VALUES (?,?)", (rm_id, date_wita()))
         conn.commit()
         conn.close()
         return redirect(url_for('resep', rm_id=rm_id))
@@ -109,28 +105,19 @@ def rekam_medis(pasien_id):
     # Ambil data pasien
     pasien = conn.execute("SELECT * FROM pasien WHERE id=?", (pasien_id,)).fetchone()
 
-    # Ambil riwayat kunjungan
-    riwayat = conn.execute("""
-        SELECT r.*,
-               strftime('%d-%m-%Y %H:%M', r.tanggal) as tgl_format
+    # Ambil riwayat kunjungan sebelumnya (urut dari yang terbaru)
+    riwayat = conn.execute('''
+        SELECT r.*, strftime('%d-%m-%Y %H:%M', r.tanggal) as tgl_format
         FROM rekam_medis r
         WHERE r.pasien_id = ?
         ORDER BY r.tanggal DESC
-    """, (pasien_id,)).fetchall()
-
-    # DEBUG: cetak ke terminal
-    print("=" * 50)
-    print(f"DEBUG: Pasien ID {pasien_id} - Jumlah riwayat: {len(riwayat)}")
-    print("=" * 50)
+    ''', (pasien_id,)).fetchall()
 
     # Ambil daftar ICD-10
     icd_list = conn.execute("SELECT * FROM icd10 ORDER BY kode").fetchall()
     conn.close()
 
-    return render_template('rekam_medis.html',
-                         pasien=pasien,
-                         riwayat=riwayat,
-                         icd_list=icd_list)
+    return render_template('rekam_medis.html', pasien=pasien, icd_list=icd_list, riwayat=riwayat)
 
 @app.route('/resep/<int:rm_id>', methods=['GET', 'POST'])
 @login_required
@@ -175,158 +162,6 @@ def cari_pasien():
         pasien = []
     conn.close()
     return render_template('cari_pasien.html', pasien=pasien, keyword=keyword)
-
-@app.route('/soap/detail/<int:soap_id>')
-@login_required
-def detail_soap(soap_id):
-    conn = get_db()
-    rm = conn.execute('''
-        SELECT r.*, p.nama, p.no_rm
-        FROM rekam_medis r
-        JOIN pasien p ON r.pasien_id = p.id
-        WHERE r.id = ?
-    ''', (soap_id,)).fetchone()
-    conn.close()
-    return render_template('detail_soap.html', rm=rm)
-
-@app.route('/laporan')
-@login_required
-def laporan():
-    conn = get_db()
-
-    # 10 penyakit terbanyak (dari tabel rekam_medis)
-    penyakit = conn.execute('''
-        SELECT assessment, COUNT(*) as total
-        FROM rekam_medis
-        WHERE assessment IS NOT NULL AND assessment != ''
-        GROUP BY assessment
-        ORDER BY total DESC
-        LIMIT 10
-    ''').fetchall()
-
-    # 10 obat terbanyak dipakai (dari tabel resep)
-    obat_top = conn.execute('''
-        SELECT o.nama, SUM(r.jumlah) as total
-        FROM resep r
-        JOIN obat o ON r.obat_id = o.id
-        GROUP BY o.id
-        ORDER BY total DESC
-        LIMIT 10
-    ''').fetchall()
-
-    # Kunjungan per hari (30 hari terakhir)
-    kunjungan = conn.execute('''
-        SELECT tanggal, COUNT(*) as jml
-        FROM kunjungan
-        GROUP BY tanggal
-        ORDER BY tanggal DESC
-        LIMIT 30
-    ''').fetchall()
-
-    conn.close()
-
-    return render_template('laporan.html',
-                         penyakit=penyakit,
-                         obat_top=obat_top,
-                         kunjungan=kunjungan)
-
-
-@app.route('/obat')
-@login_required
-def obat():
-    conn = get_db()
-    obat_list = conn.execute("SELECT * FROM obat ORDER BY nama").fetchall()
-    conn.close()
-    return render_template('obat.html', obat_list=obat_list)
-
-@app.route('/obat/tambah', methods=['POST'])
-@login_required
-def obat_tambah():
-    nama = request.form['nama']
-    stok = int(request.form['stok'])
-    satuan = request.form['satuan']
-    conn = get_db()
-    try:
-        conn.execute("INSERT INTO obat (nama, stok, satuan) VALUES (?, ?, ?)", (nama, stok, satuan))
-        conn.commit()
-    except:
-        pass
-    conn.close()
-    return redirect(url_for('obat'))
-
-@app.route('/obat/edit/<int:obat_id>', methods=['POST'])
-@login_required
-def obat_edit(obat_id):
-    nama = request.form['nama']
-    stok = int(request.form['stok'])
-    satuan = request.form['satuan']
-    conn = get_db()
-    conn.execute("UPDATE obat SET nama = ?, stok = ?, satuan = ? WHERE id = ?", (nama, stok, satuan, obat_id))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('obat'))
-
-@app.route('/obat/hapus/<int:obat_id>')
-@login_required
-def obat_hapus(obat_id):
-    conn = get_db()
-    # Cek apakah obat pernah dipakai di resep
-    used = conn.execute("SELECT COUNT(*) as total FROM resep WHERE obat_id = ?", (obat_id,)).fetchone()['total']
-    if used > 0:
-        conn.close()
-        return "Obat tidak bisa dihapus karena sudah pernah digunakan dalam resep!", 400
-    else:
-        conn.execute("DELETE FROM obat WHERE id = ?", (obat_id,))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('obat'))
-
-@app.route('/icd10')
-@login_required
-def icd10_list():
-    conn = get_db()
-    icd_list = conn.execute("SELECT * FROM icd10 ORDER BY kode").fetchall()
-    conn.close()
-    return render_template('icd10.html', icd_list=icd_list)
-
-@app.route('/icd10/tambah', methods=['POST'])
-@login_required
-def icd10_tambah():
-    kode = request.form['kode'].upper()
-    nama_penyakit = request.form['nama_penyakit']
-    kategori = request.form.get('kategori', '')
-    conn = get_db()
-    try:
-        conn.execute("INSERT INTO icd10 (kode, nama_penyakit, kategori) VALUES (?, ?, ?)", (kode, nama_penyakit, kategori))
-        conn.commit()
-    except:
-        pass
-    conn.close()
-    return redirect(url_for('icd10_list'))
-
-@app.route('/icd10/edit/<kode>', methods=['GET', 'POST'])
-@login_required
-def icd10_edit(kode):
-    conn = get_db()
-    if request.method == 'POST':
-        nama_penyakit = request.form['nama_penyakit']
-        kategori = request.form.get('kategori', '')
-        conn.execute("UPDATE icd10 SET nama_penyakit = ?, kategori = ? WHERE kode = ?", (nama_penyakit, kategori, kode))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('icd10_list'))
-    icd = conn.execute("SELECT * FROM icd10 WHERE kode = ?", (kode,)).fetchone()
-    conn.close()
-    return render_template('icd10_edit.html', icd=icd)
-
-@app.route('/icd10/hapus/<kode>')
-@login_required
-def icd10_hapus(kode):
-    conn = get_db()
-    conn.execute("DELETE FROM icd10 WHERE kode = ?", (kode,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('icd10_list'))
 
 if __name__ == '__main__':
     # Buat database jika belum ada

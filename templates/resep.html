@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resep Obat - dr Galih</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        .info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        .info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .info strong {
+            color: #667eea;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0 15px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .btn-back {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .btn-back:hover {
+            background: #5a6268;
+        }
+        .note {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #856404;
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>💊 Resep Obat</h2>
+        <div class="subtitle">Praktek Mandiri dr. Galih</div>
+
+        <div class="info">
+            <p><strong>🏷️ No. Resep:</strong> R-{{ rm_id }}</p>
+            <p><strong>👨‍⚕️ Dokter:</strong> dr. Galih, Sp.PD</p>
+        </div>
+
+        <form method="POST">
+            <label>💊 Nama Obat</label>
+            <select name="obat_id" required>
+                <option value="">-- Pilih Obat --</option>
+                {% for o in obat_list %}
+                <option value="{{ o.id }}">{{ o.nama }} (stok: {{ o.stok }} {{ o.satuan }})</option>
+                {% endfor %}
+            </select>
+
+            <label>📦 Jumlah</label>
+            <input type="number" name="jumlah" placeholder="Contoh: 10" required>
+
+            <label>📋 Aturan Pakai</label>
+            <input type="text" name="aturan" placeholder="Contoh: 3x1 tablet (setelah makan)" required>
+
+            <button type="submit">💾 Simpan Resep</button>
+        </form>
+
+        <div class="note">
+            💡 Stok obat akan berkurang otomatis setelah resep disimpan.
+        </div>
+
+        <a href="/dashboard" class="btn-back">← Kembali ke Dashboard</a>
+    </div>
+</div>
+</body>
+</html>

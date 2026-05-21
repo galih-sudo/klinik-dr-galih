@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head><title>SOAP - Rekam Medis</title>
+<style>
+body{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);padding:20px}
+.container{max-width:1000px;margin:0 auto}
+.card{background:white;border-radius:20px;padding:25px;margin-bottom:20px}
+h2{color:#667eea;text-align:center}
+.info{background:#e8f4f8;padding:15px;border-radius:12px;margin-bottom:20px}
+label{font-weight:bold;display:block;margin-top:15px}
+textarea,input,select{width:100%;padding:12px;margin:5px 0;border-radius:10px}
+button{width:100%;padding:12px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px}
+.btn-back{display:block;text-align:center;margin-top:15px;background:#6c757d;color:white;padding:10px;border-radius:10px;text-decoration:none}
+.riwayat-table{width:100%;border-collapse:collapse}
+.riwayat-table th,.riwayat-table td{padding:10px;border-bottom:1px solid #eee}
+.btn-detail{background:#2196f3;color:white;padding:4px 10px;border-radius:5px;text-decoration:none}
+.empty-riwayat{text-align:center;padding:20px;color:#999}
+</style>
+<script>
+function updateDiagnosis(){
+let select=document.getElementById("icd_select");
+let manual=document.getElementById("assessment");
+if(select.value&&select.value!=="LAINNYA"){
+manual.value=select.options[select.selectedIndex].text;
+}else if(select.value==="LAINNYA"){manual.value="";manual.focus();}}
+</script>
+</head><body>
+<div class=container>
+<div class=card>
+<h2>SOAP - Rekam Medis</h2>
+<div class=info>
+<p><strong>Pasien:</strong> {{ pasien.nama }}</p>
+<p><strong>No RM:</strong> {{ pasien.no_rm or "-" }}</p>
+<p><strong>Total Kunjungan:</strong> {{ riwayat|length if riwayat else 0 }} kali</p>
+</div>
+<form method=POST>
+<label>Subjective:</label><textarea name=subjective rows=3 required></textarea>
+<label>Objective:</label><textarea name=objective rows=3></textarea>
+<label>ICD-10:</label><select id=icd_select onchange=updateDiagnosis()>
+<option value="">-- Pilih ICD-10 --</option>
+{% if icd_list %}{% for icd in icd_list %}<option value="{{ icd.kode }}">{{ icd.kode }} - {{ icd.nama_penyakit }}</option>{% endfor %}{% endif %}
+<option value=LAINNYA>Lainnya</option></select>
+<label>Diagnosis manual:</label><input type=text id=assessment name=assessment>
+<label>Planning:</label><textarea name=planning rows=3></textarea>
+<label>Link Lampiran:</label><input type=url name=lampiran_mega>
+<button type=submit>Simpan</button>
+</form><a href=/dashboard class=btn-back>Kembali</a>
+</div>
+<div class=card>
+<h3>Riwayat Kunjungan</h3>
+{% if riwayat and riwayat|length > 0 %}
+<table class=riwayat-table>
+<tr><th>Tanggal</th><th>Diagnosis</th><th>Keluhan</th><th>Aksi</th></tr>
+{% for r in riwayat %}
+<tr><td>{{ r.tgl_format or r.tanggal[:16] }}</td><td>{{ r.assessment or "-" }}</td><td>{{ r.subjective[:50] }}</td><td><a href="/soap/detail/{{ r.id }}" class=btn-detail target=_blank>Detail</a></td></tr>
+{% endfor %}</table>
+{% else %}<div class=empty-riwayat>Belum ada riwayat kunjungan</div>{% endif %}
+</div></div></body></html>

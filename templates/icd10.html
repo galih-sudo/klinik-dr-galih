@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manajemen ICD-10 - dr Galih</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { color: #667eea; margin-bottom: 5px; text-align: center; font-size: 20px; }
+        .subtitle { text-align: center; color: #764ba2; margin-bottom: 20px; font-size: 13px; }
+        .form-tambah { background: #f0f0f0; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .form-tambah input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        .form-tambah button { padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .search-box { padding: 10px; margin-bottom: 15px; background: #f8f9fa; border-radius: 8px; }
+        .search-box input { padding: 6px; width: 200px; border: 1px solid #ddd; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #667eea; }
+        .btn-edit { background: #ff9800; color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; display: inline-block; font-size: 11px; }
+        .btn-delete { background: #e74c3c; color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; display: inline-block; margin-left: 5px; font-size: 11px; }
+        .btn-back { display: inline-block; margin-top: 15px; padding: 8px 16px; background: #6c757d; color: white; text-decoration: none; border-radius: 8px; }
+        @media (max-width: 768px) { body { padding: 10px; } table { font-size: 11px; } th, td { padding: 6px 4px; } }
+    </style>
+    <script>
+        function searchTable() {
+            let input = document.getElementById("searchInput");
+            let filter = input.value.toUpperCase();
+            let table = document.getElementById("icdTable");
+            let tr = table.getElementsByTagName("tr");
+            for (let i = 1; i < tr.length; i++) {
+                let tdKode = tr[i].getElementsByTagName("td")[0];
+                let tdNama = tr[i].getElementsByTagName("td")[1];
+                if (tdKode || tdNama) {
+                    let txt = (tdKode ? tdKode.textContent : "") + (tdNama ? tdNama.textContent : "");
+                    tr[i].style.display = txt.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>📚 Manajemen ICD-10</h2>
+        <div class="subtitle">International Classification of Diseases</div>
+
+        <div class="form-tambah">
+            <h3>➕ Tambah ICD-10 Baru</h3>
+            <form method="POST" action="/icd10/tambah">
+                <input type="text" name="kode" placeholder="Kode (contoh: A09)" required>
+                <input type="text" name="nama_penyakit" placeholder="Nama Penyakit" required>
+                <input type="text" name="kategori" placeholder="Kategori (contoh: Pencernaan)">
+                <button type="submit">+ Tambah</button>
+            </form>
+        </div>
+
+        <div class="search-box">
+            <span>🔍 Cari ICD-10: </span>
+            <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari kode atau penyakit...">
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="icdTable">
+                <thead>
+                    <tr><th>Kode</th><th>Nama Penyakit</th><th>Kategori</th><th>Aksi</th></tr>
+                </thead>
+                <tbody>
+                    {% for icd in icd_list %}
+                    <tr>
+                        <td><strong>{{ icd.kode }}</strong></td>
+                        <td>{{ icd.nama_penyakit }}</td>
+                        <td>{{ icd.kategori or "-" }}</td>
+                        <td>
+                            <a href="/icd10/edit/{{ icd.kode }}" class="btn-edit">✏️ Edit</a>
+                            <a href="/icd10/hapus/{{ icd.kode }}" class="btn-delete" onclick="return confirm('Hapus {{ icd.kode }}?')">🗑️ Hapus</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="/dashboard" class="btn-back">← Kembali ke Dashboard</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

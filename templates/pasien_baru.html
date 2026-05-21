@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tambah Pasien Baru - dr Galih</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: 0.3s;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .btn-back {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-back:hover {
+            background: #5a6268;
+        }
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>➕ Tambah Pasien Baru</h2>
+        <div class="subtitle">Isi data pasien dengan lengkap</div>
+        
+        <form method="POST">
+            <label>Nama Lengkap</label>
+            <input type="text" name="nama" placeholder="Contoh: Budi Santoso" required autofocus>
+            
+            <label>Tanggal Lahir</label>
+            <input type="date" name="tgl_lahir" required>
+            
+            <label>Alamat</label>
+            <textarea name="alamat" rows="3" placeholder="Jl. Raya Sengkol Mantang, Lombok Tengah"></textarea>
+            
+            <label>No. Telepon</label>
+            <input type="text" name="no_telp" placeholder="Contoh: 08123456789">
+            
+            <button type="submit">💾 Simpan & Lanjut ke Rekam Medis</button>
+        </form>
+        
+        <hr>
+        <a href="/dashboard" class="btn-back">← Kembali ke Dashboard</a>
+    </div>
+</body>
+</html>

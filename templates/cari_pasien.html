@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cari Pasien - dr Galih</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h2 { color: #667eea; margin-bottom: 10px; text-align: center; }
+        .subtitle { text-align: center; color: #764ba2; margin-bottom: 30px; font-size: 14px; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 30px; }
+        .search-box input { flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px; }
+        .search-box button { padding: 12px 25px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 10px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; color: #667eea; }
+        .btn { background: #667eea; color: white; padding: 5px 12px; border-radius: 5px; text-decoration: none; font-size: 12px; }
+        .btn-back { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 8px; }
+        .no-data { text-align: center; padding: 30px; color: #999; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>🔍 Cari Pasien</h2>
+        <div class="subtitle">Cari berdasarkan nama pasien</div>
+
+        <form method="GET" class="search-box">
+            <input type="text" name="q" placeholder="Masukkan nama pasien..." value="{{ keyword }}">
+            <button type="submit">🔍 Cari</button>
+        </form>
+
+        {% if keyword %}
+            {% if pasien %}
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr><th>No RM</th><th>Nama</th><th>Tgl Lahir</th><th>Alamat</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in pasien %}
+                            <tr>
+                                <td>{{ p.no_rm or "-" }}</td>
+                                <td>{{ p.nama }}</td>
+                                <td>{{ p.tgl_lahir or "-" }}</td>
+                                <td>{{ p.alamat or "-" }}</td>
+                                <td><a href="/rekam_medis/{{ p.id }}" class="btn">📝 Rekam Medis</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="no-data">⚠️ Tidak ditemukan pasien dengan nama "{{ keyword }}"</div>
+            {% endif %}
+        {% else %}
+            <div class="no-data">💡 Masukkan nama pasien lalu klik tombol Cari</div>
+        {% endif %}
+
+        <div style="text-align: center;">
+            <a href="/dashboard" class="btn-back">← Kembali ke Dashboard</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

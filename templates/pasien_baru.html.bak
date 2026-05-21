@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Tambah Pasien</title></head>
+<body>
+<h2>Tambah Pasien Baru</h2>
+<form method="POST">
+    Nama: <input type="text" name="nama" required><br>
+    Tgl Lahir: <input type="date" name="tgl_lahir" required><br>
+    Alamat: <textarea name="alamat"></textarea><br>
+    No Telp: <input type="text" name="no_telp"><br>
+    <button type="submit">Simpan</button>
+</form>
+<a href="/dashboard">Kembali</a>
+</body>
+</html>

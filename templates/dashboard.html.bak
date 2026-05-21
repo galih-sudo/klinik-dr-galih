@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - dr Galih</title>
+    <style>
+        body { font-family: Arial; background: #f5f7fa; padding: 20px; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f0f0f0; }
+        .btn { background: #667eea; color: white; padding: 5px 10px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Praktek Mandiri dr. Galih - {{ today }}</h2>
+        <a href="/pasien/baru">Tambah Pasien</a> | <a href="/logout">Logout</a>
+    </div>
+
+    <div class="card">
+        <h3>Daftar Pasien</h3>
+        <table>
+            <thead>
+                <tr><th>No RM</th><th>Nama</th><th>Tgl Lahir</th><th>Aksi</th></tr>
+            </thead>
+            <tbody>
+                {% for p in semua_pasien %}
+                <tr>
+                    <td><strong>{{ p.no_rm }}</strong></td>
+                    <td>{{ p.nama }}</td>
+                    <td>{{ p.tgl_lahir }}</td>
+                    <td><a href="/rekam_medis/{{ p.id }}" class="btn">Rekam Medis</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

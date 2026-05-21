@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit ICD-10 - dr Galih</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container { max-width: 500px; margin: 50px auto; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { color: #667eea; margin-bottom: 20px; text-align: center; }
+        label { display: block; margin-top: 10px; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 10px; margin-top: 20px; background: #2196f3; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-back { display: inline-block; margin-top: 15px; text-align: center; width: 100%; color: #666; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>✏️ Edit ICD-10</h2>
+        <form method="POST">
+            <label>Kode:</label>
+            <input type="text" value="{{ icd.kode }}" disabled style="background:#f0f0f0">
+            <label>Nama Penyakit:</label>
+            <input type="text" name="nama_penyakit" value="{{ icd.nama_penyakit }}" required>
+            <label>Kategori:</label>
+            <input type="text" name="kategori" value="{{ icd.kategori or "" }}">
+            <button type="submit">💾 Simpan Perubahan</button>
+        </form>
+        <a href="/icd10" class="btn-back">← Kembali</a>
+    </div>
+</div>
+</body>
+</html>
