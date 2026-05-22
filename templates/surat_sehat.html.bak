@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Surat Sehat - dr Galih</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            background: #f0f0f0;
+            padding: 40px;
+        }
+        .surat {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; }
+        .header h1 { font-size: 22px; margin-bottom: 5px; }
+        .header p { font-size: 12px; color: #666; }
+        .title { text-align: center; font-size: 18px; font-weight: bold; margin: 30px 0; text-decoration: underline; }
+        .content { line-height: 1.8; font-size: 14px; }
+        .signature { margin-top: 50px; text-align: right; }
+        .footer { margin-top: 30px; font-size: 11px; text-align: center; border-top: 1px solid #ddd; padding-top: 15px; }
+        .btn-print { display: block; width: 200px; margin: 20px auto; padding: 10px; background: #4caf50; color: white; text-align: center; text-decoration: none; border-radius: 8px; font-family: Arial; }
+        @media print { body { background: white; padding: 0; } .btn-print { display: none; } .surat { box-shadow: none; padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div>
+        <a href="javascript:window.print()" class="btn-print">🖨️ Cetak Surat</a>
+        <div class="surat">
+            <div class="header">
+                <h1>PRAKTEK MANDIRI dr. GALIH</h1>
+                <p>Jl. Raya Sengkol Mantang, Lombok Tengah</p>
+                <p>Telp: (0376) 123456 | Email: dr.galih@klinik.com</p>
+            </div>
+            <div class="title">SURAT KETERANGAN SEHAT</div>
+            <div class="content">
+                <p>Yang bertanda tangan di bawah ini:</p>
+                <table style="width:100%; margin:10px 0">
+                    <tr><td style="width:120px">Nama Dokter</td><td>: dr. Galih, Sp.PD</td>
+                    </tr>
+                    <tr><td>Praktek</td><td>: Praktek Mandiri dr. Galih</td>
+                    </tr>
+                </table>
+                <p>Dengan ini menerangkan bahwa:</p>
+                <table style="width:100%; margin:10px 0">
+                    <tr><td style="width:120px">Nama Pasien</td><td>: <strong>{{ rm.nama }}</strong></td>
+                    </tr>
+                    <tr><td>No. RM</td><td>: <strong>{{ rm.no_rm }}</strong></td>
+                    </tr>
+                </table>
+                <p>Berdasarkan hasil pemeriksaan yang telah dilakukan, pasien tersebut dinyatakan <strong>SEHAT</strong> dan <strong>LAYAK</strong> untuk melakukan aktivitas.</p>
+                <p>Surat keterangan sehat ini diberikan sebagai persyaratan administrasi yang diperlukan.</p>
+                <p>Demikian surat keterangan ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
+            </div>
+            <div class="signature">
+                <p>Lombok Tengah, {{ rm.tanggal[:10] }}</p>
+                <p>WITA</p>
+                <div style="margin-top:40px">
+                    <p>Hormat kami,</p>
+                    <p style="margin-top:40px"><strong>dr. Galih, Sp.PD</strong></p>
+                    <p>SIP: 12345/Dinkes/2025</p>
+                </div>
+            </div>
+            <div class="footer">
+                * Surat keterangan sehat ini berlaku selama 7 hari sejak tanggal diterbitkan<br>
+                * Harap menunjukkan surat asli kepada pihak yang berwenang
+            </div>
+        </div>
+    </div>
+</body>
+</html>

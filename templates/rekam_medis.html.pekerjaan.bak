@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SOAP - Rekam Medis | dr Galih</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #667eea;
+            margin-bottom: 5px;
+            text-align: center;
+            font-size: 20px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .info {
+            background: #e8f4f8;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .info p {
+            margin: 4px 0;
+        }
+        .info strong {
+            color: #667eea;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .btn-back {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            padding: 8px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .riwayat-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .riwayat-table th, .riwayat-table td {
+            padding: 8px 6px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .riwayat-table th {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .btn-detail {
+            background: #2196f3;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 11px;
+        }
+        .empty-riwayat {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-style: italic;
+            font-size: 13px;
+        }
+        h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #eee;
+            font-size: 16px;
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { max-width: 100%; }
+            .card { padding: 15px; }
+            .riwayat-table { font-size: 11px; }
+            .riwayat-table th, .riwayat-table td { padding: 6px 4px; }
+        }
+    </style>
+    <script>
+        function updateDiagnosis() {
+            let select = document.getElementById("icd_select");
+            let manualInput = document.getElementById("assessment");
+            if (select.value && select.value !== "LAINNYA") {
+                let selectedText = select.options[select.selectedIndex].text;
+                manualInput.value = selectedText;
+            } else if (select.value === "LAINNYA") {
+                manualInput.value = "";
+                manualInput.focus();
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>📋 SOAP - Rekam Medis</h2>
+        <div class="subtitle">Subjective, Objective, Assessment, Planning</div>
+
+        <div class="info">
+            <p><strong>👤 Pasien:</strong> {{ pasien.nama }}</p>
+            <p><strong>🏷️ No. RM:</strong> {{ pasien.no_rm or "-" }}</p>
+            <p><strong>📅 Tanggal Lahir:</strong> {{ pasien.tgl_lahir or "-" }}</p>
+            <p><strong>📊 Total Kunjungan:</strong> {{ riwayat|length if riwayat else 0 }} kali</p>
+        </div>
+
+        <form method="POST">
+            <label>📝 Subjective (Keluhan Pasien):</label>
+            <textarea name="subjective" rows="3" placeholder="Apa yang dirasakan pasien?" required></textarea>
+
+            <label>🔍 Objective (Hasil Pemeriksaan):</label>
+            <textarea name="objective" rows="3" placeholder="TD, Suhu, Fisik, dll"></textarea>
+
+            <label>💊 Assessment (Diagnosis) - Pilih dari ICD-10:</label>
+            <select id="icd_select" onchange="updateDiagnosis()">
+                <option value="">-- Pilih Diagnosis ICD-10 --</option>
+                {% if icd_list %}
+                    {% for icd in icd_list %}
+                    <option value="{{ icd.kode }}">{{ icd.kode }} - {{ icd.nama_penyakit }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="">⚠️ Data ICD-10 tidak tersedia</option>
+                {% endif %}
+                <option value="LAINNYA">Lainnya (isi manual)</option>
+            </select>
+
+            <label>Atau tulis diagnosis manual:</label>
+            <input type="text" id="assessment" name="assessment" placeholder="Diagnosis / Penyakit">
+
+            <label>📋 Planning (Tatalaksana):</label>
+            <textarea name="planning" rows="3" placeholder="Terapi, Edukasi, Rujukan"></textarea>
+
+            <label>📎 Link Lampiran (Mega/Google Drive):</label>
+            <input type="url" name="lampiran_mega" placeholder="https://mega.nz/file/xxx#key">
+
+            <button type="submit">💾 Simpan & Lanjut ke Resep</button>
+            <a href="/dashboard" class="btn-back">← Kembali ke Dashboard</a>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>📜 Riwayat Kunjungan</h3>
+        {% if riwayat and riwayat|length > 0 %}
+            <div style="overflow-x: auto;">
+                <table class="riwayat-table">
+                    <thead>
+                        <tr><th>Tanggal</th><th>Diagnosis</th><th>Keluhan</th><th>Aksi</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in riwayat %}
+                        <tr>
+                            <td>{{ r.tgl_format or r.tanggal[:16] }}</td>
+                            <td>{{ r.assessment or "-" }}</td>
+                            <td>{{ r.subjective[:50] }}{% if r.subjective|length > 50 %}...{% endif %}</td>
+                            <td><a href="/soap/detail/{{ r.id }}" class="btn-detail" target="_blank">🔍 Detail</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-riwayat">
+                💡 Belum ada riwayat kunjungan untuk pasien ini.<br>
+                Silakan buat rekam medis baru di atas.
+            </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

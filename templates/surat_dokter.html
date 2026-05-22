@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Surat Keterangan Dokter - dr Galih</title>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            background: #f0f0f0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .surat {
+            max-width: 21cm;
+            width: 100%;
+            background: white;
+            padding: 1.5cm;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            min-height: 29.7cm;
+        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header .nama { font-size: 18px; font-weight: bold; text-transform: uppercase; }
+        .header .praktek { font-size: 14px; }
+        .header .sip { font-size: 12px; }
+        .header .alamat { font-size: 11px; margin-top: 5px; }
+        .garis { border-top: 2px solid #000; margin: 5px 0 10px 0; }
+        .title { text-align: center; margin: 20px 0; }
+        .title .judul { font-size: 18px; font-weight: bold; text-decoration: underline; }
+        .title .no { font-size: 12px; margin-top: 5px; }
+        .content { margin: 20px 0; line-height: 1.6; font-size: 13px; }
+        .content table { width: 100%; margin: 10px 0; }
+        .content td { padding: 4px 0; }
+        .content .label { width: 130px; }
+        .istirahat { margin: 15px 0; }
+        .signature { margin-top: 40px; text-align: right; }
+        .signature div { margin-top: 50px; }
+        .signature .tempat-tgl { font-size: 12px; }
+        .btn-print {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-family: Arial;
+            cursor: pointer;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .btn-print { display: none; }
+            .surat { box-shadow: none; padding: 1.5cm; min-height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <a href="javascript:window.print()" class="btn-print">🖨️ Cetak Surat (A4)</a>
+    <div class="surat">
+        <div class="header">
+            <div class="nama">dr. Galih Wibisana</div>
+            <div class="praktek">PRAKTEK UMUM</div>
+            <div class="sip">SIP 23232/KES/DU/IV/2024</div>
+            <div class="alamat">Jl Raya Sengkol Mantang Telp 0000 email: -</div>
+        </div>
+        <div class="garis"></div>
+        <div class="title">
+            <div class="judul">SURAT KETERANGAN DOKTER</div>
+            <div class="no">NO. <span id="no_surat">[Auto]</span>/SKD/{{ rm.tanggal[:4] if rm.tanggal else "2026" }}</div>
+        </div>
+        <div class="content">
+            <p>Yang bertanda tangan dibawah ini menerangkan bahwa;</p>
+            <table>
+                <tr><td class="label">Nama</td><td>: <strong>{{ rm.nama }}</strong></td>
+                <tr><td class="label">Umur</td><td>: <span id="umur">[Auto]</span> TH</td>
+                <tr><td class="label">Jenis Kelamin</td><td>: <span id="jk">[ - ]</span></td>
+                <tr><td class="label">Alamat</td><td>: <span id="alamat_pasien">{{ rm.alamat or "-" }}</span></td>
+                <tr><td class="label">Pekerjaan</td><td>: <span id="pekerjaan">[ - ]</span></td>
+            </table>
+            <p>Yang bersangkutan menurut hasil pemeriksaan kami benar dalam keadaan sakit dan memerlukan istirahat selama <strong>_____ (3) TIGA HARI _____</strong></p>
+            <p>Mulai tanggal <strong>{{ rm.tanggal[8:10] if rm.tanggal else "-" }}-{{ rm.tanggal[5:7] if rm.tanggal else "-" }}-{{ rm.tanggal[:4] if rm.tanggal else "-" }}</strong> sampai dengan tanggal <strong id="tgl_akhir">[Auto]</strong></p>
+            <p>Demikian Surat Keterangan ini dibuat untuk dipergunakan sebagaimana mestinya dan yang terkait harap memakluminya.</p>
+        </div>
+        <div class="signature">
+            <div class="tempat-tgl">Sengkol, {{ rm.tanggal[8:10] if rm.tanggal else "-" }}-{{ rm.tanggal[5:7] if rm.tanggal else "-" }}-{{ rm.tanggal[:4] if rm.tanggal else "-" }}</div>
+            <div>Dokter Pemeriksa</div>
+            <div style="margin-top: 40px;">dr. Galih Wibisana</div>
+            <div style="margin-top: 5px;">SIP 23232/KES/DU/IV/2024</div>
+        </div>
+    </div>
+    <script>
+        // Generate No Surat otomatis
+        const noSurat = Math.floor(Math.random() * 1000) + 1;
+        document.getElementById("no_surat").innerText = noSurat;
+        // Hitung umur dari tanggal lahir
+        const tglLahir = "{{ rm.tgl_lahir if rm.tgl_lahir else "" }}";
+        if (tglLahir) {
+            const today = new Date();
+            const birth = new Date(tglLahir);
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            document.getElementById("umur").innerText = age;
+        }
+        // Hitung tanggal akhir (3 hari dari tgl awal)
+        const tglMulai = "{{ rm.tanggal[:10] if rm.tanggal else "" }}";
+        if (tglMulai) {
+            const start = new Date(tglMulai);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 3);
+            const dd = String(end.getDate()).padStart(2, "0");
+            const mm = String(end.getMonth() + 1).padStart(2, "0");
+            const yyyy = end.getFullYear();
+            document.getElementById("tgl_akhir").innerText = dd + "-" + mm + "-" + yyyy;
+        }
+        // Isi default JK dan Pekerjaan (bisa diisi manual)
+        document.getElementById("jk").innerHTML = '<input type="text" style="border:none; border-bottom:1px solid #000; width:150px;" placeholder="Laki/Perempuan">';
+        document.getElementById("pekerjaan").innerHTML = '<input type="text" style="border:none; border-bottom:1px solid #000; width:200px;" placeholder="Pekerjaan">';
+    </script>
+</body>
+</html>

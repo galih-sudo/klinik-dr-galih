@@ -328,6 +328,81 @@ def icd10_hapus(kode):
     conn.close()
     return redirect(url_for('icd10_list'))
 
+@app.route('/pasien/hidden')
+@login_required
+def pasien_hidden():
+    conn = get_db()
+    # Ambil pasien yang di-hide (aktif = 0)
+    pasien_hidden = conn.execute("SELECT * FROM pasien WHERE aktif = 0 ORDER BY id DESC").fetchall()
+    total_hidden = len(pasien_hidden)
+    conn.close()
+    return render_template('pasien_hidden.html', pasien_hidden=pasien_hidden, total_hidden=total_hidden)
+
+@app.route('/pasien/hide/<int:pasien_id>')
+@login_required
+def hide_pasien(pasien_id):
+    conn = get_db()
+    conn.execute("UPDATE pasien SET aktif = 0 WHERE id = ?", (pasien_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('dashboard'))
+
+@app.route('/pasien/unhide/<int:pasien_id>')
+@login_required
+def unhide_pasien(pasien_id):
+    conn = get_db()
+    conn.execute("UPDATE pasien SET aktif = 1 WHERE id = ?", (pasien_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('pasien_hidden'))
+
+@app.route('/surat_istirahat/<int:pasien_id>')
+@login_required
+def surat_istirahat(pasien_id):
+    conn = get_db()
+    # Ambil data pasien dan rekam medis terakhir
+    rm = conn.execute('''
+        SELECT r.*, p.nama, p.no_rm
+        FROM rekam_medis r
+        JOIN pasien p ON r.pasien_id = p.id
+        WHERE p.id = ?
+        ORDER BY r.tanggal DESC
+        LIMIT 1
+    ''', (pasien_id,)).fetchone()
+    conn.close()
+    return render_template('surat_istirahat.html', rm=rm)
+
+@app.route('/surat_sehat/<int:pasien_id>')
+@login_required
+def surat_sehat(pasien_id):
+    conn = get_db()
+    # Ambil data pasien dan rekam medis terakhir
+    rm = conn.execute('''
+        SELECT r.*, p.nama, p.no_rm
+        FROM rekam_medis r
+        JOIN pasien p ON r.pasien_id = p.id
+        WHERE p.id = ?
+        ORDER BY r.tanggal DESC
+        LIMIT 1
+    ''', (pasien_id,)).fetchone()
+    conn.close()
+    return render_template('surat_sehat.html', rm=rm)
+
+@app.route('/surat_dokter/<int:pasien_id>')
+@login_required
+def surat_dokter(pasien_id):
+    conn = get_db()
+    rm = conn.execute('''
+        SELECT r.*, p.nama, p.no_rm, p.alamat, p.tgl_lahir
+        FROM rekam_medis r
+        JOIN pasien p ON r.pasien_id = p.id
+        WHERE p.id = ?
+        ORDER BY r.tanggal DESC
+        LIMIT 1
+    ''', (pasien_id,)).fetchone()
+    conn.close()
+    return render_template('surat_dokter.html', rm=rm, pasien=rm)
+
 if __name__ == '__main__':
     # Buat database jika belum ada
     if not os.path.exists('klinik.db'):
