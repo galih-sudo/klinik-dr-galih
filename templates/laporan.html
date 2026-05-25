@@ -3,87 +3,120 @@
 <head>
     <title>Laporan - dr Galih</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
-            min-height: 100vh;
         }
-        .container { max-width: 1000px; margin: 0 auto; width: 100%; }
+        .container { max-width: 1200px; margin: 0 auto; }
         .card {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        h2 { color: #667eea; margin-bottom: 5px; text-align: center; font-size: 20px; }
-        .subtitle { text-align: center; color: #764ba2; margin-bottom: 20px; font-size: 13px; }
-        h3 { color: #667eea; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #eee; font-size: 16px; }
+        h2 { color: #667eea; margin-bottom: 5px; text-align: center; }
+        .subtitle { text-align: center; color: #764ba2; margin-bottom: 25px; font-size: 14px; }
+        h3 { color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: #667eea; font-weight: 600; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #667eea; }
         .btn-back {
             display: inline-block;
-            text-align: center;
-            margin-top: 15px;
-            padding: 8px 16px;
+            margin-top: 20px;
+            padding: 10px 25px;
             background: #6c757d;
             color: white;
             text-decoration: none;
             border-radius: 8px;
-            font-size: 13px;
         }
-        .empty-data { text-align: center; padding: 20px; color: #999; font-style: italic; }
-        @media (max-width: 768px) { body { padding: 10px; } table { font-size: 11px; } th, td { padding: 6px 4px; } }
+        .chart-container { max-width: 600px; margin: 0 auto 20px auto; }
+        canvas { max-height: 300px; }
     </style>
 </head>
 <body>
 <div class="container">
+    <div class="card">
+        <h2>📊 Dashboard Statistik</h2>
+        <div class="subtitle">Grafik Kunjungan Pasien per Hari</div>
+        
+        <div class="chart-container">
+            <canvas id="kunjunganChart"></canvas>
+        </div>
+    </div>
+
     <div class="card">
         <h2>📊 Laporan Praktek dr. Galih</h2>
         <div class="subtitle">Statistik 10 Penyakit & 10 Obat Terbanyak</div>
 
         <h3>🏥 10 Penyakit Terbanyak</h3>
         {% if penyakit and penyakit|length > 0 %}
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr><th>Penyakit</th><th>Jumlah Kasus</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for p in penyakit %}
-                        <tr><td>{{ p.assessment }}</td><td>{{ p.total }} kali</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="empty-data">⚠️ Belum ada data penyakit</div>
-        {% endif %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>Penyakit</th><th>Jumlah Kasus</th></tr></thead>
+                <tbody>
+                    {% for p in penyakit %}
+                    <tr><td>{{ p.assessment }}</td><td>{{ p.total }} kali</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<p>⚠️ Belum ada data penyakit</p>{% endif %}
 
         <h3>💊 10 Obat Terbanyak Dipakai</h3>
         {% if obat_top and obat_top|length > 0 %}
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead><tr><th>Nama Obat</th><th>Total Pemakaian</th></tr></thead>
-                    <tbody>
-                        {% for o in obat_top %}
-                        <tr><td>{{ o.nama }}</td><td>{{ o.total }} kali</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="empty-data">⚠️ Belum ada data pemakaian obat</div>
-        {% endif %}
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>Nama Obat</th><th>Total Pemakaian</th></tr></thead>
+                <tbody>
+                    {% for o in obat_top %}
+                    <tr><td>{{ o.nama }}</td><td>{{ o.total }} kali</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}<p>⚠️ Belum ada data pemakaian obat</p>{% endif %}
 
         <div style="text-align: center;">
             <a href="/dashboard" class="btn-back">← Kembali ke Dashboard</a>
         </div>
     </div>
 </div>
+
+<script>
+    // Data dari server
+    const kunjunganData = {{ kunjungan_json|safe }};
+    const labels = kunjunganData.map(item => item.tanggal);
+    const data = kunjunganData.map(item => item.jml);
+    
+    const ctx = document.getElementById('kunjunganChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Jumlah Kunjungan',
+                data: data,
+                backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                borderColor: '#667eea',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: 'Kunjungan Pasien per Hari' }
+            }
+        }
+    });
+</script>
 </body>
 </html>

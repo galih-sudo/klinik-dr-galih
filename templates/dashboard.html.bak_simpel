@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - dr Galih</title>
+    <style>
+        body{font-family:Arial;background:#f5f7fa;padding:20px}
+        .header{background:white;padding:20px;border-radius:16px;margin-bottom:20px}
+        .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px}
+        .stat-card{background:white;padding:20px;border-radius:16px;text-align:center}
+        .stat-card h3{font-size:2em;color:#667eea}
+        .nav-menu{background:white;padding:12px;border-radius:16px;margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap}
+        .nav-menu a{padding:8px 20px;background:#f0f0f0;color:#667eea;text-decoration:none;border-radius:25px}
+        .nav-menu a:hover{background:#667eea;color:white}
+        .card{background:white;padding:20px;border-radius:16px}
+        table{width:100%;border-collapse:collapse}
+        th,td{padding:12px;text-align:left;border-bottom:1px solid #eee}
+        th{background:#f8f9fa;color:#667eea}
+        .btn{padding:5px 12px;background:#667eea;color:white;border-radius:20px;text-decoration:none;font-size:12px;display:inline-block;margin:2px}
+        .btn-edit{background:#ff9800}
+        .btn-edit:hover{background:#e68900}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>🏥 Praktek Mandiri dr. Galih</h2>
+        <p>Selamat datang, <strong>{{ session.username }}</strong> ({{ session.role }})</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card"><h3>{{ total_pasien }}</h3><p>Total Pasien</p></div>
+        <div class="stat-card"><h3>{{ kunjungan_hari_ini }}</h3><p>Kunjungan Hari Ini</p></div>
+        <div class="stat-card"><h3>{{ total_obat }}</h3><p>Jenis Obat</p></div>
+    </div>
+
+    <div class="nav-menu">
+        <a href="/pasien/baru">➕ Pasien Baru</a>
+        <a href="/cari_pasien">🔍 Cari Pasien</a>
+        {% if session.role == 'admin' %}
+        <a href="/laporan">📊 Laporan</a>
+        <a href="/obat">💊 Stok Obat</a>
+        <a href="/icd10">📚 ICD-10</a>
+        <a href="/pasien/hidden">👁️ Tersembunyi</a>
+        {% endif %}
+        <a href="/logout">🚪 Logout</a>
+    </div>
+
+    <div class="card">
+        <h3>📋 Daftar Pasien</h3>
+        <table>
+            <thead><tr><th>No RM</th><th>Nama</th><th>Tgl Lahir</th><th>Aksi</th></tr></thead>
+            <tbody>
+                {% for p in semua_pasien %}
+                <tr>
+                    <td>{{ p.no_rm or "-" }}</td>
+                    <td>{{ p.nama }}</td>
+                    <td>{{ p.tgl_lahir or "-" }}</td>
+                    <td>
+                        {% if session.role == 'admin' %}
+                        <a href="/rekam_medis/{{ p.id }}" class="btn">📝 Rekam Medis</a>
+                        <a href="/pasien/edit/{{ p.id }}" class="btn btn-edit">✏️ Edit</a>
+                        <a href="/surat_istirahat/{{ p.id }}" class="btn">📄 Istirahat</a>
+                        <a href="/surat_sehat/{{ p.id }}" class="btn">✅ Sehat</a>
+                        {% else %}
+                        <span style="color:#999;">🔒 Tidak ada akses</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

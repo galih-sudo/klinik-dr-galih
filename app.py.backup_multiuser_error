@@ -4,13 +4,9 @@ from datetime import datetime, timedelta
 import pytz
 from functools import wraps
 import os
-import json
 
 app = Flask(__name__)
-app.secret_key = 'rahasia_dr_galih_2025'
-app.config['UPLOAD_FOLDER'] = '/home/galihweb/klinik_dr_galih/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+app.secret_key = 'rahasia_dr_galih'
 
 WITA = pytz.timezone('Asia/Makassar')
 
@@ -25,6 +21,7 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
+# Decorator login
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -33,13 +30,14 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
+# Decorator role (hanya admin)
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'logged_in' not in session:
             return redirect(url_for('login'))
         if session.get('role') != 'admin':
-            return "<h3>Akses Ditolak!</h3><p>Halaman ini hanya untuk dokter.</p><a href='/dashboard'>Kembali</a>", 403
+            return "Akses ditolak! Hanya dokter yang bisa mengakses halaman ini.", 403
         return f(*args, **kwargs)
     return decorated
 
@@ -68,8 +66,10 @@ def logout():
 def index():
     return redirect(url_for('login'))
 
+# ========== DASHBOARD (hanya admin) ==========
 @app.route('/dashboard')
 @login_required
+@admin_required
 def dashboard():
     conn = get_db()
     today = date_wita()
@@ -77,17 +77,16 @@ def dashboard():
     total_pasien = len(semua_pasien)
     kunjungan_hari_ini = conn.execute("SELECT COUNT(*) as total FROM kunjungan WHERE tanggal=?", (today,)).fetchone()['total']
     total_obat = conn.execute("SELECT COUNT(*) as total FROM obat").fetchone()['total']
-    obat_habis = conn.execute("SELECT * FROM obat WHERE stok < 10 ORDER BY stok ASC").fetchall()
     conn.close()
     return render_template('dashboard.html', 
                          semua_pasien=semua_pasien,
                          total_pasien=total_pasien,
                          kunjungan_hari_ini=kunjungan_hari_ini,
                          total_obat=total_obat,
-                         obat_habis=obat_habis,
                          today=today,
                          session=session)
 
+# ========== PASIEN BARU (bisa diakses semua role) ==========
 @app.route('/pasien/baru', methods=['GET', 'POST'])
 @login_required
 def pasien_baru():
@@ -105,13 +104,16 @@ def pasien_baru():
         conn.commit()
         pasien_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
         conn.close()
-        if session.get('role') == 'admin':
-            return redirect(url_for('rekam_medis', pasien_id=pasien_id))
-        else:
-            return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard') if session.get('role') == 'admin' else url_for('pasien_baru_sukses'))
     conn.close()
     return render_template('pasien_baru.html')
 
+@app.route('/pasien/sukses')
+@login_required
+def pasien_baru_sukses():
+    return render_template('sukses.html')
+
+# ========== CARI PASIEN (bisa diakses semua role) ==========
 @app.route('/cari_pasien')
 @login_required
 def cari_pasien():
@@ -124,6 +126,7 @@ def cari_pasien():
     conn.close()
     return render_template('cari_pasien.html', pasien=pasien, keyword=keyword, session=session)
 
+# ========== REKAM MEDIS (hanya admin) ==========
 @app.route('/rekam_medis/<int:pasien_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -137,16 +140,7 @@ def rekam_medis(pasien_id):
         tgl = now_wita()
         lampiran = request.form.get('lampiran_mega', '')
         
-        # Handle file upload
-        file_path = ''
-        if 'file_lampiran' in request.files:
-            file = request.files['file_lampiran']
-            if file and file.filename:
-                filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(file_path)
-                file_path = f"/uploads/{filename}"
-        
+        # Update data tambahan pasien
         jenis_kelamin = request.form.get('jenis_kelamin', '')
         pekerjaan = request.form.get('pekerjaan', '')
         alergi = request.form.get('alergi', '')
@@ -159,9 +153,9 @@ def rekam_medis(pasien_id):
         """, (jenis_kelamin, pekerjaan, alergi, riwayat_penyakit, pasien_id))
         
         cur = conn.execute("""
-            INSERT INTO rekam_medis (pasien_id, tanggal, subjective, objective, assessment, planning, lampiran_mega, file_lampiran) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (pasien_id, tgl, subj, obj, ass, plan, lampiran, file_path))
+            INSERT INTO rekam_medis (pasien_id, tanggal, subjective, objective, assessment, planning, lampiran_mega) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (pasien_id, tgl, subj, obj, ass, plan, lampiran))
         rm_id = cur.lastrowid
         conn.execute("INSERT INTO kunjungan (rekam_medis_id, tanggal) VALUES (?,?)", (rm_id, date_wita()))
         conn.commit()
@@ -174,6 +168,7 @@ def rekam_medis(pasien_id):
     conn.close()
     return render_template('rekam_medis.html', pasien=pasien, riwayat=riwayat, icd_list=icd_list)
 
+# ========== RESEP (hanya admin) ==========
 @app.route('/resep/<int:rm_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -198,6 +193,7 @@ def resep(rm_id):
     conn.close()
     return render_template('resep.html', rm_id=rm_id, obat_list=obat_list)
 
+# ========== LAPORAN (hanya admin) ==========
 @app.route('/laporan')
 @login_required
 @admin_required
@@ -219,18 +215,10 @@ def laporan():
         ORDER BY total DESC 
         LIMIT 10
     ''').fetchall()
-    kunjungan = conn.execute('''
-        SELECT tanggal, COUNT(*) as jml 
-        FROM kunjungan 
-        GROUP BY tanggal 
-        ORDER BY tanggal ASC 
-        LIMIT 30
-    ''').fetchall()
     conn.close()
-    kunjungan_list = [{'tanggal': k['tanggal'], 'jml': k['jml']} for k in kunjungan]
-    kunjungan_json = json.dumps(kunjungan_list)
-    return render_template('laporan.html', penyakit=penyakit, obat_top=obat_top, kunjungan_json=kunjungan_json)
+    return render_template('laporan.html', penyakit=penyakit, obat_top=obat_top)
 
+# ========== OBAT (hanya admin) ==========
 @app.route('/obat')
 @login_required
 @admin_required
@@ -284,6 +272,7 @@ def obat_hapus(obat_id):
         conn.close()
         return redirect(url_for('obat'))
 
+# ========== ICD-10 (hanya admin) ==========
 @app.route('/icd10')
 @login_required
 @admin_required
@@ -335,6 +324,7 @@ def icd10_hapus(kode):
     conn.close()
     return redirect(url_for('icd10_list'))
 
+# ========== SURAT (hanya admin) ==========
 @app.route('/surat_istirahat/<int:pasien_id>')
 @login_required
 @admin_required
@@ -383,6 +373,7 @@ def surat_dokter(pasien_id):
     conn.close()
     return render_template('surat_dokter.html', rm=rm, pasien=rm)
 
+# ========== HIDE/UNHIDE (hanya admin) ==========
 @app.route('/pasien/hidden')
 @login_required
 @admin_required
@@ -413,35 +404,6 @@ def unhide_pasien(pasien_id):
     conn.close()
     return redirect(url_for('pasien_hidden'))
 
-@app.route('/pasien/edit/<int:pasien_id>', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def edit_pasien(pasien_id):
-    conn = get_db()
-    if request.method == 'POST':
-        nama = request.form['nama']
-        tgl_lahir = request.form['tgl_lahir']
-        alamat = request.form['alamat']
-        no_telp = request.form['no_telp']
-        jenis_kelamin = request.form.get('jenis_kelamin', '')
-        pekerjaan = request.form.get('pekerjaan', '')
-        alergi = request.form.get('alergi', '')
-        riwayat_penyakit = request.form.get('riwayat_penyakit', '')
-        
-        conn.execute("""
-            UPDATE pasien 
-            SET nama = ?, tgl_lahir = ?, alamat = ?, no_telp = ?,
-                jenis_kelamin = ?, pekerjaan = ?, alergi = ?, riwayat_penyakit = ?
-            WHERE id = ?
-        """, (nama, tgl_lahir, alamat, no_telp, jenis_kelamin, pekerjaan, alergi, riwayat_penyakit, pasien_id))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('dashboard'))
-    
-    pasien = conn.execute("SELECT * FROM pasien WHERE id = ?", (pasien_id,)).fetchone()
-    conn.close()
-    return render_template('edit_pasien.html', pasien=pasien)
-
 @app.route('/soap/detail/<int:soap_id>')
 @login_required
 @admin_required
@@ -455,54 +417,6 @@ def detail_soap(soap_id):
     ''', (soap_id,)).fetchone()
     conn.close()
     return render_template('detail_soap.html', rm=rm)
-
-@app.route('/users')
-@login_required
-@admin_required
-def manage_users():
-    conn = get_db()
-    users = conn.execute("SELECT username, role FROM user ORDER BY username").fetchall()
-    conn.close()
-    return render_template('manage_users.html', users=users)
-
-@app.route('/user/tambah', methods=['POST'])
-@login_required
-@admin_required
-def tambah_user():
-    username = request.form['username']
-    password = request.form['password']
-    role = request.form['role']
-    conn = get_db()
-    try:
-        conn.execute("INSERT INTO user (username, password, role) VALUES (?, ?, ?)", (username, password, role))
-        conn.commit()
-    except:
-        pass
-    conn.close()
-    return redirect(url_for('manage_users'))
-
-@app.route('/user/reset/<username>', methods=['POST'])
-@login_required
-@admin_required
-def reset_password(username):
-    new_password = request.form['new_password']
-    conn = get_db()
-    conn.execute("UPDATE user SET password = ? WHERE username = ?", (new_password, username))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('manage_users'))
-
-@app.route('/user/hapus/<username>')
-@login_required
-@admin_required
-def hapus_user(username):
-    if username == 'admin':
-        return "Tidak bisa menghapus user admin!", 403
-    conn = get_db()
-    conn.execute("DELETE FROM user WHERE username = ?", (username,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('manage_users'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head><title>Cari Pasien - dr Galih</title>
+<style>
+body { font-family: Arial; background: #f5f7fa; padding: 20px; }
+.container { max-width: 900px; margin: 0 auto; }
+.card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+input, button { padding: 10px; margin: 5px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+.btn { background: #667eea; color: white; padding: 5px 12px; text-decoration: none; border-radius: 5px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>🔍 Cari Pasien</h2>
+        <form method="GET">
+            <input type="text" name="q" placeholder="Nama pasien..." value="{{ keyword }}">
+            <button type="submit">Cari</button>
+        </form>
+        
+        {% if keyword %}
+            {% if pasien %}
+                <table>
+                    <thead><tr><th>No RM</th><th>Nama</th><th>Tgl Lahir</th></thead>
+                    <tbody>
+                        {% for p in pasien %}
+                        <tr><td>{{ p.no_rm or "-" }}</td><td>{{ p.nama }}</td><td>{{ p.tgl_lahir or "-" }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>Tidak ada pasien dengan nama "{{ keyword }}"</p>
+            {% endif %}
+        {% endif %}
+        <p><a href="/logout">Logout</a></p>
+    </div>
+</div>
+</body>
+</html>
