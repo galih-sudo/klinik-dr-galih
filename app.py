@@ -1,12 +1,12 @@
-import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 from datetime import datetime, timedelta
 import pytz
 from functools import wraps
+import os
 
 app = Flask(__name__)
-app.secret_key = 'rahasia_dr_galih'
+app.secret_key = 'rahasia_dr_galih_2025'
 
 WITA = pytz.timezone('Asia/Makassar')
 
@@ -17,7 +17,7 @@ def now_wita():
     return datetime.now(WITA).strftime('%Y-%m-%d %H:%M:%S')
 
 def get_db():
-    conn = sqlite3.connect('klinik.db')
+    conn = sqlite3.connect('/home/galihweb/klinik_dr_galih/klinik.db')
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -26,6 +26,17 @@ def login_required(f):
     def decorated(*args, **kwargs):
         if 'logged_in' not in session:
             return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'logged_in' not in session:
+            return redirect(url_for('login'))
+        # Jika role bukan admin, tolak akses
+        if session.get('role') != 'admin':
+            return "<h3>Akses Ditolak!</h3><p>Halaman ini hanya untuk dokter.</p><a href='/dashboard'>Kembali ke Dashboard</a>", 403
         return f(*args, **kwargs)
     return decorated
 
@@ -39,9 +50,20 @@ def login():
         conn.close()
         if user:
             session['logged_in'] = True
+            session['username'] = username
+            session['role'] = user['role']
             return redirect(url_for('dashboard'))
         return render_template('login.html', error='Username atau password salah')
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/')
+def index():
+    return redirect(url_for('login'))
 
 @app.route('/dashboard')
 @login_required
@@ -53,13 +75,13 @@ def dashboard():
     kunjungan_hari_ini = conn.execute("SELECT COUNT(*) as total FROM kunjungan WHERE tanggal=?", (today,)).fetchone()['total']
     total_obat = conn.execute("SELECT COUNT(*) as total FROM obat").fetchone()['total']
     conn.close()
-    return render_template('dashboard.html',
+    return render_template('dashboard.html', 
                          semua_pasien=semua_pasien,
                          total_pasien=total_pasien,
                          kunjungan_hari_ini=kunjungan_hari_ini,
                          total_obat=total_obat,
                          today=today,
-                         now_wita=now_wita)
+                         session=session)
 
 @app.route('/pasien/baru', methods=['GET', 'POST'])
 @login_required
@@ -70,7 +92,6 @@ def pasien_baru():
         tgl_lahir = request.form['tgl_lahir']
         alamat = request.form['alamat']
         no_telp = request.form['no_telp']
-        # Generate No RM otomatis
         tahun = datetime.now(WITA).strftime('%y')
         count = conn.execute("SELECT COUNT(*) as total FROM pasien").fetchone()['total']
         no_rm = f"{tahun}-{(count + 1):04d}"
@@ -79,12 +100,29 @@ def pasien_baru():
         conn.commit()
         pasien_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
         conn.close()
-        return redirect(url_for('rekam_medis', pasien_id=pasien_id))
+        # Setelah tambah pasien, jika admin langsung ke SOAP, jika staff ke dashboard
+        if session.get('role') == 'admin':
+            return redirect(url_for('rekam_medis', pasien_id=pasien_id))
+        else:
+            return redirect(url_for('dashboard'))
     conn.close()
     return render_template('pasien_baru.html')
 
+@app.route('/cari_pasien')
+@login_required
+def cari_pasien():
+    keyword = request.args.get('q', '')
+    conn = get_db()
+    if keyword:
+        pasien = conn.execute("SELECT * FROM pasien WHERE nama LIKE ? ORDER BY nama", (f'%{keyword}%',)).fetchall()
+    else:
+        pasien = []
+    conn.close()
+    return render_template('cari_pasien.html', pasien=pasien, keyword=keyword, session=session)
+
 @app.route('/rekam_medis/<int:pasien_id>', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def rekam_medis(pasien_id):
     conn = get_db()
     if request.method == 'POST':
@@ -94,46 +132,37 @@ def rekam_medis(pasien_id):
         plan = request.form['planning']
         tgl = now_wita()
         lampiran = request.form.get('lampiran_mega', '')
-
+        
+        jenis_kelamin = request.form.get('jenis_kelamin', '')
+        pekerjaan = request.form.get('pekerjaan', '')
+        alergi = request.form.get('alergi', '')
+        riwayat_penyakit = request.form.get('riwayat_penyakit', '')
+        
+        conn.execute("""
+            UPDATE pasien 
+            SET jenis_kelamin = ?, pekerjaan = ?, alergi = ?, riwayat_penyakit = ?
+            WHERE id = ?
+        """, (jenis_kelamin, pekerjaan, alergi, riwayat_penyakit, pasien_id))
+        
         cur = conn.execute("""
-            INSERT INTO rekam_medis (pasien_id, tanggal, subjective, objective, assessment, planning, lampiran_mega)
+            INSERT INTO rekam_medis (pasien_id, tanggal, subjective, objective, assessment, planning, lampiran_mega) 
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (pasien_id, tgl, subj, obj, ass, plan, lampiran))
         rm_id = cur.lastrowid
-
-        conn.execute("INSERT INTO kunjungan (rekam_medis_id, tanggal) VALUES (?, ?)", (rm_id, date_wita()))
+        conn.execute("INSERT INTO kunjungan (rekam_medis_id, tanggal) VALUES (?,?)", (rm_id, date_wita()))
         conn.commit()
         conn.close()
         return redirect(url_for('resep', rm_id=rm_id))
-
-    # Ambil data pasien
+    
     pasien = conn.execute("SELECT * FROM pasien WHERE id=?", (pasien_id,)).fetchone()
-
-    # Ambil riwayat kunjungan
-    riwayat = conn.execute("""
-        SELECT r.*,
-               strftime('%d-%m-%Y %H:%M', r.tanggal) as tgl_format
-        FROM rekam_medis r
-        WHERE r.pasien_id = ?
-        ORDER BY r.tanggal DESC
-    """, (pasien_id,)).fetchall()
-
-    # DEBUG: cetak ke terminal
-    print("=" * 50)
-    print(f"DEBUG: Pasien ID {pasien_id} - Jumlah riwayat: {len(riwayat)}")
-    print("=" * 50)
-
-    # Ambil daftar ICD-10
+    riwayat = conn.execute("SELECT * FROM rekam_medis WHERE pasien_id = ? ORDER BY tanggal DESC", (pasien_id,)).fetchall()
     icd_list = conn.execute("SELECT * FROM icd10 ORDER BY kode").fetchall()
     conn.close()
-
-    return render_template('rekam_medis.html',
-                         pasien=pasien,
-                         riwayat=riwayat,
-                         icd_list=icd_list)
+    return render_template('rekam_medis.html', pasien=pasien, riwayat=riwayat, icd_list=icd_list)
 
 @app.route('/resep/<int:rm_id>', methods=['GET', 'POST'])
 @login_required
+@admin_required
 def resep(rm_id):
     conn = get_db()
     obat_list = conn.execute("SELECT * FROM obat ORDER BY nama").fetchall()
@@ -155,84 +184,33 @@ def resep(rm_id):
     conn.close()
     return render_template('resep.html', rm_id=rm_id, obat_list=obat_list)
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
-@app.route('/')
-def index():
-    return redirect(url_for('login'))
-
-@app.route('/cari_pasien')
-@login_required
-def cari_pasien():
-    keyword = request.args.get('q', '')
-    conn = get_db()
-    if keyword:
-        pasien = conn.execute("SELECT * FROM pasien WHERE nama LIKE ? ORDER BY nama", (f'%{keyword}%',)).fetchall()
-    else:
-        pasien = []
-    conn.close()
-    return render_template('cari_pasien.html', pasien=pasien, keyword=keyword)
-
-@app.route('/soap/detail/<int:soap_id>')
-@login_required
-def detail_soap(soap_id):
-    conn = get_db()
-    rm = conn.execute('''
-        SELECT r.*, p.nama, p.no_rm
-        FROM rekam_medis r
-        JOIN pasien p ON r.pasien_id = p.id
-        WHERE r.id = ?
-    ''', (soap_id,)).fetchone()
-    conn.close()
-    return render_template('detail_soap.html', rm=rm)
-
 @app.route('/laporan')
 @login_required
+@admin_required
 def laporan():
     conn = get_db()
-
-    # 10 penyakit terbanyak (dari tabel rekam_medis)
     penyakit = conn.execute('''
-        SELECT assessment, COUNT(*) as total
-        FROM rekam_medis
+        SELECT assessment, COUNT(*) as total 
+        FROM rekam_medis 
         WHERE assessment IS NOT NULL AND assessment != ''
-        GROUP BY assessment
-        ORDER BY total DESC
+        GROUP BY assessment 
+        ORDER BY total DESC 
         LIMIT 10
     ''').fetchall()
-
-    # 10 obat terbanyak dipakai (dari tabel resep)
     obat_top = conn.execute('''
-        SELECT o.nama, SUM(r.jumlah) as total
-        FROM resep r
-        JOIN obat o ON r.obat_id = o.id
-        GROUP BY o.id
-        ORDER BY total DESC
+        SELECT o.nama, SUM(r.jumlah) as total 
+        FROM resep r 
+        JOIN obat o ON r.obat_id = o.id 
+        GROUP BY o.id 
+        ORDER BY total DESC 
         LIMIT 10
     ''').fetchall()
-
-    # Kunjungan per hari (30 hari terakhir)
-    kunjungan = conn.execute('''
-        SELECT tanggal, COUNT(*) as jml
-        FROM kunjungan
-        GROUP BY tanggal
-        ORDER BY tanggal DESC
-        LIMIT 30
-    ''').fetchall()
-
     conn.close()
-
-    return render_template('laporan.html',
-                         penyakit=penyakit,
-                         obat_top=obat_top,
-                         kunjungan=kunjungan)
-
+    return render_template('laporan.html', penyakit=penyakit, obat_top=obat_top)
 
 @app.route('/obat')
 @login_required
+@admin_required
 def obat():
     conn = get_db()
     obat_list = conn.execute("SELECT * FROM obat ORDER BY nama").fetchall()
@@ -241,13 +219,14 @@ def obat():
 
 @app.route('/obat/tambah', methods=['POST'])
 @login_required
+@admin_required
 def obat_tambah():
     nama = request.form['nama']
     stok = int(request.form['stok'])
     satuan = request.form['satuan']
     conn = get_db()
     try:
-        conn.execute("INSERT INTO obat (nama, stok, satuan) VALUES (?, ?, ?)", (nama, stok, satuan))
+        conn.execute("INSERT INTO obat (nama, stok, satuan) VALUES (?,?,?)", (nama, stok, satuan))
         conn.commit()
     except:
         pass
@@ -256,6 +235,7 @@ def obat_tambah():
 
 @app.route('/obat/edit/<int:obat_id>', methods=['POST'])
 @login_required
+@admin_required
 def obat_edit(obat_id):
     nama = request.form['nama']
     stok = int(request.form['stok'])
@@ -266,101 +246,20 @@ def obat_edit(obat_id):
     conn.close()
     return redirect(url_for('obat'))
 
-@app.route('/obat/hapus/<int:obat_id>')
-@login_required
-def obat_hapus(obat_id):
-    conn = get_db()
-    # Cek apakah obat pernah dipakai di resep
-    used = conn.execute("SELECT COUNT(*) as total FROM resep WHERE obat_id = ?", (obat_id,)).fetchone()['total']
-    if used > 0:
-        conn.close()
-        return "Obat tidak bisa dihapus karena sudah pernah digunakan dalam resep!", 400
-    else:
-        conn.execute("DELETE FROM obat WHERE id = ?", (obat_id,))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('obat'))
-
 @app.route('/icd10')
 @login_required
+@admin_required
 def icd10_list():
     conn = get_db()
     icd_list = conn.execute("SELECT * FROM icd10 ORDER BY kode").fetchall()
     conn.close()
     return render_template('icd10.html', icd_list=icd_list)
 
-@app.route('/icd10/tambah', methods=['POST'])
-@login_required
-def icd10_tambah():
-    kode = request.form['kode'].upper()
-    nama_penyakit = request.form['nama_penyakit']
-    kategori = request.form.get('kategori', '')
-    conn = get_db()
-    try:
-        conn.execute("INSERT INTO icd10 (kode, nama_penyakit, kategori) VALUES (?, ?, ?)", (kode, nama_penyakit, kategori))
-        conn.commit()
-    except:
-        pass
-    conn.close()
-    return redirect(url_for('icd10_list'))
-
-@app.route('/icd10/edit/<kode>', methods=['GET', 'POST'])
-@login_required
-def icd10_edit(kode):
-    conn = get_db()
-    if request.method == 'POST':
-        nama_penyakit = request.form['nama_penyakit']
-        kategori = request.form.get('kategori', '')
-        conn.execute("UPDATE icd10 SET nama_penyakit = ?, kategori = ? WHERE kode = ?", (nama_penyakit, kategori, kode))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('icd10_list'))
-    icd = conn.execute("SELECT * FROM icd10 WHERE kode = ?", (kode,)).fetchone()
-    conn.close()
-    return render_template('icd10_edit.html', icd=icd)
-
-@app.route('/icd10/hapus/<kode>')
-@login_required
-def icd10_hapus(kode):
-    conn = get_db()
-    conn.execute("DELETE FROM icd10 WHERE kode = ?", (kode,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('icd10_list'))
-
-@app.route('/pasien/hidden')
-@login_required
-def pasien_hidden():
-    conn = get_db()
-    # Ambil pasien yang di-hide (aktif = 0)
-    pasien_hidden = conn.execute("SELECT * FROM pasien WHERE aktif = 0 ORDER BY id DESC").fetchall()
-    total_hidden = len(pasien_hidden)
-    conn.close()
-    return render_template('pasien_hidden.html', pasien_hidden=pasien_hidden, total_hidden=total_hidden)
-
-@app.route('/pasien/hide/<int:pasien_id>')
-@login_required
-def hide_pasien(pasien_id):
-    conn = get_db()
-    conn.execute("UPDATE pasien SET aktif = 0 WHERE id = ?", (pasien_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('dashboard'))
-
-@app.route('/pasien/unhide/<int:pasien_id>')
-@login_required
-def unhide_pasien(pasien_id):
-    conn = get_db()
-    conn.execute("UPDATE pasien SET aktif = 1 WHERE id = ?", (pasien_id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('pasien_hidden'))
-
 @app.route('/surat_istirahat/<int:pasien_id>')
 @login_required
+@admin_required
 def surat_istirahat(pasien_id):
     conn = get_db()
-    # Ambil data pasien dan rekam medis terakhir
     rm = conn.execute('''
         SELECT r.*, p.nama, p.no_rm
         FROM rekam_medis r
@@ -374,9 +273,9 @@ def surat_istirahat(pasien_id):
 
 @app.route('/surat_sehat/<int:pasien_id>')
 @login_required
+@admin_required
 def surat_sehat(pasien_id):
     conn = get_db()
-    # Ambil data pasien dan rekam medis terakhir
     rm = conn.execute('''
         SELECT r.*, p.nama, p.no_rm
         FROM rekam_medis r
@@ -388,38 +287,35 @@ def surat_sehat(pasien_id):
     conn.close()
     return render_template('surat_sehat.html', rm=rm)
 
-@app.route('/surat_dokter/<int:pasien_id>')
+@app.route('/pasien/hidden')
 @login_required
-def surat_dokter(pasien_id):
+@admin_required
+def pasien_hidden():
     conn = get_db()
-    rm = conn.execute('''
-        SELECT r.*, p.nama, p.no_rm, p.alamat, p.tgl_lahir
-        FROM rekam_medis r
-        JOIN pasien p ON r.pasien_id = p.id
-        WHERE p.id = ?
-        ORDER BY r.tanggal DESC
-        LIMIT 1
-    ''', (pasien_id,)).fetchone()
+    pasien_hidden = conn.execute("SELECT * FROM pasien WHERE aktif = 0 ORDER BY id DESC").fetchall()
+    total_hidden = len(pasien_hidden)
     conn.close()
-    return render_template('surat_dokter.html', rm=rm, pasien=rm)
+    return render_template('pasien_hidden.html', pasien_hidden=pasien_hidden, total_hidden=total_hidden)
+
+@app.route('/pasien/hide/<int:pasien_id>')
+@login_required
+@admin_required
+def hide_pasien(pasien_id):
+    conn = get_db()
+    conn.execute("UPDATE pasien SET aktif = 0 WHERE id = ?", (pasien_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('dashboard'))
+
+@app.route('/pasien/unhide/<int:pasien_id>')
+@login_required
+@admin_required
+def unhide_pasien(pasien_id):
+    conn = get_db()
+    conn.execute("UPDATE pasien SET aktif = 1 WHERE id = ?", (pasien_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('pasien_hidden'))
 
 if __name__ == '__main__':
-    # Buat database jika belum ada
-    if not os.path.exists('klinik.db'):
-        conn = sqlite3.connect('klinik.db')
-        c = conn.cursor()
-        c.execute('CREATE TABLE user (username TEXT PRIMARY KEY, password TEXT)')
-        c.execute("INSERT INTO user VALUES ('admin', 'admin123')")
-        c.execute('CREATE TABLE pasien (id INTEGER PRIMARY KEY AUTOINCREMENT, no_rm TEXT, nama TEXT, tgl_lahir TEXT, alamat TEXT, no_telp TEXT)')
-        c.execute('CREATE TABLE rekam_medis (id INTEGER PRIMARY KEY AUTOINCREMENT, pasien_id INTEGER, tanggal TEXT, subjective TEXT, objective TEXT, assessment TEXT, planning TEXT, lampiran_mega TEXT)')
-        c.execute('CREATE TABLE obat (id INTEGER PRIMARY KEY AUTOINCREMENT, nama TEXT UNIQUE, stok INTEGER, satuan TEXT)')
-        c.execute('CREATE TABLE resep (id INTEGER PRIMARY KEY AUTOINCREMENT, rekam_medis_id INTEGER, obat_id INTEGER, jumlah INTEGER, aturan TEXT)')
-        c.execute('CREATE TABLE kunjungan (id INTEGER PRIMARY KEY AUTOINCREMENT, rekam_medis_id INTEGER, tanggal TEXT)')
-        # Data awal obat
-        c.execute("INSERT INTO obat (nama, stok, satuan) VALUES ('Parasetamol', 100, 'tablet')")
-        c.execute("INSERT INTO obat (nama, stok, satuan) VALUES ('Amoksisilin', 50, 'kapsul')")
-        conn.commit()
-        conn.close()
-        print("✅ Database baru berhasil dibuat")
-
     app.run(debug=True, host='0.0.0.0', port=5000)

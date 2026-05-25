@@ -3,250 +3,79 @@
 <head>
     <title>Dashboard - Praktek dr Galih</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f5f7fa;
-            min-height: 100vh;
-            padding: 15px;
+            padding: 20px;
         }
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            width: 100%;
-        }
-        /* Header */
+        .container { max-width: 1200px; margin: 0 auto; }
         .header {
             background: white;
             border-radius: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #eef2f6;
-            overflow: hidden;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .header-top {
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .practice-name h1 {
-            color: #667eea;
-            font-size: 20px;
-            margin-bottom: 2px;
-        }
-        .practice-name p {
-            color: #764ba2;
-            font-size: 11px;
-        }
-        .datetime {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .date {
-            background: #f5f7fa;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #333;
-        }
-        .clock {
-            background: #f5f7fa;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #667eea;
-            font-family: monospace;
-        }
-        .btn-logout {
-            background: transparent;
-            color: #e74c3c;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 500;
-            padding: 5px 12px;
-            border-radius: 20px;
-        }
-        .btn-logout:hover {
-            background: #fee;
-        }
-        /* Running Text */
-        .running-text {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            padding: 8px 20px;
-            color: white;
-            font-size: 12px;
-        }
-        /* Stats Cards - Full width */
+        .header h1 { color: #667eea; font-size: 24px; }
         .stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 12px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
         .stat-card {
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 16px;
             text-align: center;
-            border: 1px solid #eef2f6;
-            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .stat-card h3 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 4px;
-        }
-        .stat-card p {
-            color: #666;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        /* Navigation - Full width, minimal */
+        .stat-card h3 { font-size: 2em; color: #667eea; }
         .nav-menu {
             background: white;
             border-radius: 16px;
-            padding: 8px 15px;
-            margin-bottom: 12px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 6px;
-            border: 1px solid #eef2f6;
+            gap: 10px;
         }
         .nav-menu a {
-            padding: 8px 18px;
-            background: #f5f7fa;
+            padding: 8px 20px;
+            background: #f0f0f0;
             color: #667eea;
             text-decoration: none;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s;
+            border-radius: 25px;
         }
-        .nav-menu a:hover {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-        /* Table Card */
+        .nav-menu a:hover { background: #667eea; color: white; }
         .card {
             background: white;
             border-radius: 16px;
             padding: 20px;
-            margin-bottom: 12px;
-            border: 1px solid #eef2f6;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .card h3 {
-            color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eef2f6;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-        th, td {
-            padding: 12px 8px;
-            text-align: left;
-            border-bottom: 1px solid #f0f2f5;
-        }
-        th {
-            background: #fafcfc;
-            color: #667eea;
-            font-weight: 600;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #667eea; }
         .btn-small {
-            display: inline-block;
-            padding: 4px 12px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 5px 12px;
+            background: #667eea;
             color: white;
             border-radius: 20px;
             text-decoration: none;
-            font-size: 10px;
-            font-weight: 500;
-            margin: 1px;
-        }
-        .btn-istirahat { background: #ff9800; }
-        .btn-sehat { background: #4caf50; }
-        .hide-icon {
-            font-size: 14px;
-            margin-left: 4px;
-            color: #e74c3c;
-            text-decoration: none;
-            display: inline-block;
-            padding: 3px 6px;
-            border-radius: 20px;
-        }
-        .hide-icon:hover {
-            background: #fee;
-        }
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-            .stats { gap: 8px; }
-            .stat-card { padding: 10px; }
-            .stat-card h3 { font-size: 18px; }
-            .nav-menu a { padding: 5px 12px; font-size: 10px; }
-            .header-top { padding: 12px 15px; }
-            .practice-name h1 { font-size: 16px; }
-            th, td { padding: 8px 4px; font-size: 10px; }
-            .btn-small { padding: 3px 8px; font-size: 9px; }
+            font-size: 12px;
         }
     </style>
-    <script>
-        function updateTime() {
-            const now = new Date();
-            const options = { timeZone: "Asia/Makassar", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" };
-            document.getElementById("jam_wita").innerHTML = now.toLocaleTimeString("id-ID", options);
-        }
-        setInterval(updateTime, 1000);
-        updateTime();
-    </script>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <div class="header-top">
-            <div class="practice-name">
-                <h1>🏥 Praktek Mandiri dr. Galih</h1>
-                <p>Jl. Raya Sengkol Mantang, Lombok Tengah</p>
-            </div>
-            <div class="datetime">
-                <div class="date">📅 {{ today }}</div>
-                <div class="clock">🕐 <span id="jam_wita">--:--:--</span> WITA</div>
-                <a href="/logout" class="btn-logout">🚪 Logout</a>
-            </div>
-        </div>
-        <div class="running-text">
-            <marquee scrollamount="2" onmouseover="this.stop()" onmouseout="this.start()">
-                📍 Jl. Raya Sengkol Mantang | ☎️ (0376) 123456 | Buka: Senin-Sabtu 08:00-20:00 WITA | 🩺 Melayani dengan Sepenuh Hati
-            </marquee>
-        </div>
-    </div>
-
-    <div class="nav-menu">
-        <a href="/dashboard">🏠 Dashboard</a>
-        <a href="/pasien/baru">➕ Pasien</a>
-        <a href="/cari_pasien">🔍 Cari</a>
-        <a href="/laporan">📊 Laporan</a>
-        <a href="/obat">💊 Obat</a>
-        <a href="/icd10">📚 ICD</a>
-        <a href="/pasien/hidden">👁️</a>
+        <h1>🏥 Praktek Mandiri dr. Galih</h1>
+        <p>Selamat datang, {{ session.username }} ({{ session.role }})</p>
     </div>
 
     <div class="stats">
@@ -255,30 +84,41 @@
         <div class="stat-card"><h3>{{ total_obat }}</h3><p>Jenis Obat</p></div>
     </div>
 
+    <div class="nav-menu">
+        <a href="/pasien/baru">➕ Pasien Baru</a>
+        <a href="/cari_pasien">🔍 Cari Pasien</a>
+        {% if session.role == 'admin' %}
+        <a href="/laporan">📊 Laporan</a>
+        <a href="/obat">💊 Stok Obat</a>
+        <a href="/icd10">📚 ICD-10</a>
+        <a href="/pasien/hidden">👁️ Tersembunyi</a>
+        {% endif %}
+        <a href="/logout">🚪 Logout</a>
+    </div>
+
     <div class="card">
         <h3>📋 Daftar Pasien</h3>
-        <div style="overflow-x: auto;">
-            <table>
-                <thead>
-                    <tr><th>No RM</th><th>Nama</th><th>Tgl Lahir</th><th>Aksi</th></tr>
-                </thead>
-                <tbody>
-                    {% for p in semua_pasien %}
-                    <tr>
-                        <td><strong>{{ p.no_rm or "-" }}</strong></td>
-                        <td>{{ p.nama }}</td>
-                        <td>{{ p.tgl_lahir or "-" }}</td>
-                        <td>
-                            <a href="/rekam_medis/{{ p.id }}" class="btn-small">📝 Rekam</a>
-                            <a href="/surat_istirahat/{{ p.id }}" class="btn-small btn-istirahat">📄 Istirahat</a>
-                            <a href="/surat_sehat/{{ p.id }}" class="btn-small btn-sehat">✅ Sehat</a>
-                            <a href="/pasien/hide/{{ p.id }}" class="hide-icon" onclick="return confirm('Sembunyikan {{ p.nama }}?')">🙈</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <table>
+            <thead><tr><th>No RM</th><th>Nama</th><th>Tgl Lahir</th><th>Aksi</th></tr></thead>
+            <tbody>
+                {% for p in semua_pasien %}
+                <tr>
+                    <td>{{ p.no_rm or "-" }}</td>
+                    <td>{{ p.nama }}</td>
+                    <td>{{ p.tgl_lahir or "-" }}</td>
+                    <td>
+                        {% if session.role == 'admin' %}
+                        <a href="/rekam_medis/{{ p.id }}" class="btn-small">📝 Rekam Medis</a>
+                        <a href="/surat_istirahat/{{ p.id }}" class="btn-small">📄 Istirahat</a>
+                        <a href="/surat_sehat/{{ p.id }}" class="btn-small">✅ Sehat</a>
+                        {% else %}
+                        <span class="btn-small" style="background:#ccc;">🔒 Tidak ada akses</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 </body>
